@@ -10,7 +10,7 @@ public class CarGameUI extends JFrame {
 
     public CarGameUI() {
 
-        setTitle("Car Dodge Game");
+        setTitle("Car Dodge 2D Game");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -20,6 +20,7 @@ public class CarGameUI extends JFrame {
         setVisible(true);
 
         startGame();
+        // checking if game is closed but game is running
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
@@ -30,11 +31,14 @@ public class CarGameUI extends JFrame {
         });
     }
 
+    // starting the game or thread whatever
     public void startGame() {
         engine = new CarGameEngine(panel, this);
         gameThread = new Thread(engine);
         gameThread.start();
     }
+
+    // if user clicks restart the game then everyting should reset
 
     public void restartGame() {
         engine.stop();

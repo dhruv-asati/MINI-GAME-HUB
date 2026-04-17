@@ -15,6 +15,7 @@ public class CarGameEngine implements Runnable, KeyListener {
     private boolean leftPressed = false;
     private boolean rightPressed = false;
 
+    // game engine which starts the game backend
     public CarGameEngine(CarGameUI.GamePanel panel, CarGameUI ui) {
         this.panel = panel;
         this.ui = ui;
@@ -25,6 +26,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         SwingUtilities.invokeLater(() -> panel.reset());
     }
 
+    // this will run when you call using thread it will update things regularly
     @Override
     public void run() {
         try {
@@ -42,6 +44,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         running = false;
     }
 
+    // updating the game simultaneously as we have to move the car
     private void updateGame() {
 
         movePlayer();
@@ -52,12 +55,13 @@ public class CarGameEngine implements Runnable, KeyListener {
         panel.score++;
     }
 
+    // moving the players car
     private void movePlayer() {
 
         int roadLeft = panel.getWidth() / 2 - 200;
         int roadRight = panel.getWidth() / 2 + 200 - 50;
 
-        int moveSpeed = 8;
+        int moveSpeed = 8; // setting the moving speed of the players car
 
         if (leftPressed && panel.playerX > roadLeft) {
             panel.playerX -= moveSpeed;
@@ -68,6 +72,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         }
     }
 
+    // moving the enemies acc to y coordinate
     private void moveEnemies() {
         for (Enemy e : enemies) {
             e.move();
@@ -75,6 +80,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         enemies.removeIf(e -> e.y > panel.getHeight());
     }
 
+    // checking if it is safe to spawn or there already exist a enemy
     private boolean isSafeToSpawn(int newX) {
 
         for (Enemy e : enemies) {
@@ -93,6 +99,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         return true;
     }
 
+    // spawning enemies
     private void spawnEnemies() {
 
         if (rand.nextInt(25) != 0)
@@ -103,7 +110,7 @@ public class CarGameEngine implements Runnable, KeyListener {
 
         int x = roadLeft + rand.nextInt(roadRight - roadLeft);
 
-        // 🔥 Check spacing before adding
+        // checking if is it safe to spawn enemy cars
         if (isSafeToSpawn(x)) {
             enemies.add(new Enemy(x, -100));
         }
@@ -111,6 +118,7 @@ public class CarGameEngine implements Runnable, KeyListener {
             return;
     }
 
+    // checking for the collision.
     private void checkCollision() {
         Rectangle player = new Rectangle(panel.playerX, panel.playerY, 50, 80);
 
@@ -121,16 +129,14 @@ public class CarGameEngine implements Runnable, KeyListener {
         }
     }
 
+    // game over
     private void endGame() {
-
         if (!running)
             return; // prevents multiple dialogs
-
         running = false;
-
         SwingUtilities.invokeLater(() -> {
 
-            // check if window still visible
+            // checking if window is still visible
             if (!ui.isDisplayable()) {
                 return;
             }
@@ -141,6 +147,7 @@ public class CarGameEngine implements Runnable, KeyListener {
                     "Game Over",
                     JOptionPane.YES_NO_OPTION);
 
+            // checking if user want to restart or exit
             if (option == JOptionPane.YES_OPTION) {
                 ui.restartGame();
             } else {
@@ -149,6 +156,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         });
     }
 
+    // checking which key is pressed
     @Override
     public void keyPressed(KeyEvent e) {
 
@@ -161,6 +169,7 @@ public class CarGameEngine implements Runnable, KeyListener {
         }
     }
 
+    // checking which key is released
     @Override
     public void keyReleased(KeyEvent e) {
 
