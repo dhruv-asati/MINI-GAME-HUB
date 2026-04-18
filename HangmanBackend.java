@@ -7,7 +7,17 @@ public class HangmanBackend {
     private String guessedLetters = "";
 
     public HangmanBackend(String difficulty) {
-        this.wordToGuess = WordList.getRandomWord(difficulty).toLowerCase();
+        try {
+            String word = WordList.getRandomWord(difficulty);
+            if (word == null || word.isEmpty()) {
+                throw new IllegalArgumentException("Word list returned invalid word");
+            }
+            this.wordToGuess = word.toLowerCase();
+        } catch (Exception e) {
+            System.out.println("Error loading word: " + e.getMessage());
+            // fallback word (so game never crashes)
+            this.wordToGuess = "default";
+        }
         this.displayWord = new char[wordToGuess.length()];
         Arrays.fill(displayWord, '_');
     }
@@ -30,18 +40,23 @@ public class HangmanBackend {
         }
         return correctGuess;
     }
+
     public int attemptsLeft() {
         return attemptsLeft;
     }
+
     public boolean isGameOver() {
         return attemptsLeft == 0 || new String(displayWord).equals(wordToGuess);
     }
+
     public String getDisplayWord() {
         return new String(displayWord);
     }
+
     public boolean isWin() {
         return new String(displayWord).equals(wordToGuess);
     }
+
     public String getWordToGuess() {
         return wordToGuess;
     }
