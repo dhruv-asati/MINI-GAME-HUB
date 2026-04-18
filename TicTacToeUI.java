@@ -30,7 +30,7 @@ public class TicTacToeUI {
 
         JFrame frame = new JFrame("TIC TAC TOE");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         BackgroundPanel bgPanel = new BackgroundPanel("images/tictactoe.png");
         frame.setContentPane(bgPanel);
