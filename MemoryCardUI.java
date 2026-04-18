@@ -1,78 +1,211 @@
-import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+import javax.swing.*;
 
 public class MemoryCardUI {
 
     private JFrame frame;
     private JPanel cardPanel;
-    private JLabel statusLabel;
-    private JButton restartButton;
-    private JButton exitButton;
+    private JLabel timerLabel;
 
-    private final int ROWS = 4;
-    private final int COLS = 4;
+    private int ROWS;
+    private int COLS;
+
+    private GameLogic game;
+    private ImageIcon coverIcon;
+
+    private Timer gameTimer;
+    private int timeLeft;
+    private int multiplier;
 
     public MemoryCardUI() {
-        // Create main frame
-        frame = new JFrame("Memory Card Game");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        frame = new JFrame("Fruit Match"); // 🔥 window title updated
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        frame.setLocationRelativeTo(null);
-        frame.setLayout(new BorderLayout(10, 10));
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Top status label
-        statusLabel = new JLabel("Find all matching pairs!", SwingConstants.CENTER);
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        frame.add(statusLabel, BorderLayout.NORTH);
+        // 🔥 BACKGROUND IMAGE
+        JPanel background = new JPanel() {
+            private Image bg = new ImageIcon("images/memorybg.png").getImage();
 
-        // Card grid panel (5x5)
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+            }
+        };
+
+        background.setLayout(new BorderLayout());
+        frame.setContentPane(background);
+
+        // 🔥 TITLE UPDATED
+        JLabel title = new JLabel("Fruit Match", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 34));
+        title.setForeground(new Color(180, 220, 255));
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 10, 0));
+        topPanel.add(title, BorderLayout.CENTER);
+
+        frame.add(topPanel, BorderLayout.NORTH);
+
+        // 🔥 CENTER
+        JPanel centerWrapper = new JPanel(new GridBagLayout());
+        centerWrapper.setOpaque(false);
+
+        JPanel gameContainer = new JPanel();
+        gameContainer.setLayout(new BoxLayout(gameContainer, BoxLayout.Y_AXIS));
+        gameContainer.setOpaque(false);
+
         cardPanel = new JPanel();
-        cardPanel.setLayout(new GridLayout(ROWS, COLS, 15, 15)); // rows, cols, hgap, vgap
+        cardPanel.setOpaque(false);
+        cardPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Add placeholder buttons
-        for (int i = 0; i < ROWS * COLS; i++) {
-            JButton cardButton = new JButton();
-            cardButton.setFont(new Font("Arial", Font.BOLD, 24));
-            cardButton.setBackground(Color.LIGHT_GRAY);
-            cardButton.setFocusPainted(false);
-            cardButton.setPreferredSize(new Dimension(100, 140)); // taller than wide
-            cardPanel.add(cardButton);
-        }
+        timerLabel = new JLabel("Time Left: 0", SwingConstants.CENTER);
+        timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        timerLabel.setForeground(Color.WHITE);
+        timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Wrap card panel in a center panel to keep grid centered
-        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        centerWrapper.add(cardPanel);
-        centerWrapper.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        gameContainer.add(cardPanel);
+        gameContainer.add(Box.createRigidArea(new Dimension(0, 18)));
+        gameContainer.add(timerLabel);
+
+        centerWrapper.add(gameContainer);
         frame.add(centerWrapper, BorderLayout.CENTER);
 
-        // Bottom panel for controls
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
-        restartButton = new JButton("Restart");
-        exitButton = new JButton("Exit");
-        controlPanel.add(restartButton);
-        controlPanel.add(exitButton);
-        frame.add(controlPanel, BorderLayout.SOUTH);
+        // 🔥 RESTART BUTTON
+        JButton restartButton = new JButton("Restart");
+        restartButton.setPreferredSize(new Dimension(120, 35));
 
-        // Show frame
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setOpaque(false);
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 15, 0));
+        bottomPanel.add(restartButton);
+
+        restartButton.addActionListener(e -> chooseDifficulty());
+
+        frame.add(bottomPanel, BorderLayout.SOUTH);
+
+        // 🔥 COVER TILE
+        coverIcon = new ImageIcon("images/TILE.png");
+        Image img = coverIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        coverIcon = new ImageIcon(img);
+
+        chooseDifficulty();
+
         frame.setVisible(true);
     }
 
-    // Getters
-    public JPanel getCardPanel() {
-        return cardPanel;
+    private void chooseDifficulty() {
+
+        String difficulty = DifficultySelector.getDifficulty();
+
+        if (difficulty.equals("easy")) {
+            ROWS = 4;
+            COLS = 4;
+            timeLeft = 120;
+            multiplier = 1;
+
+        } else if (difficulty.equals("medium")) {
+            ROWS = 4;
+            COLS = 5;
+            timeLeft = 150;
+            multiplier = 2;
+
+        } else { // hard
+            ROWS = 6;
+            COLS = 6;
+            timeLeft = 180;
+            multiplier = 3;
+        }
+
+        setupGame();
+        startTimer();
     }
 
-    public JLabel getStatusLabel() {
-        return statusLabel;
+    private void setupGame() {
+
+        cardPanel.removeAll();
+
+        cardPanel.setLayout(new GridLayout(ROWS, COLS, 16, 16));
+        cardPanel.setMaximumSize(new Dimension(450, 450));
+
+        int total = ROWS * COLS;
+
+        List<CardData> cards = ImageLoader.getCards(total, 60);
+        game = new GameLogic(cards, coverIcon, this::handleWin);
+
+        for (int i = 0; i < total; i++) {
+
+            JButton card = new JButton();
+
+            card.setPreferredSize(new Dimension(65, 65));
+            card.setBackground(new Color(48, 0, 72));
+            card.setBorder(BorderFactory.createEmptyBorder());
+            card.setFocusPainted(false);
+
+            card.setIcon(coverIcon);
+
+            card.putClientProperty("revealed", false);
+            card.putClientProperty("matched", false);
+
+            int index = i;
+
+            card.addActionListener(e -> game.handleClick(card, index));
+
+            cardPanel.add(card);
+        }
+
+        cardPanel.revalidate();
+        cardPanel.repaint();
     }
 
-    public JButton getRestartButton() {
-        return restartButton;
+    private void startTimer() {
+
+        timerLabel.setText("Time Left: " + timeLeft);
+
+        if (gameTimer != null)
+            gameTimer.stop();
+
+        gameTimer = new Timer(1000, e -> {
+            timeLeft--;
+            timerLabel.setText("Time Left: " + timeLeft);
+
+            if (timeLeft <= 0) {
+                gameTimer.stop();
+                handleLoss();
+            }
+        });
+
+        gameTimer.start();
     }
 
-    public JButton getExitButton() {
-        return exitButton;
+    private void handleWin() {
+
+        gameTimer.stop();
+
+        int baseScore = timeLeft * multiplier;
+        int pairs = (ROWS * COLS) / 2;
+        int bonus = pairs * 10;
+
+        int totalScore = baseScore + bonus;
+
+        JOptionPane.showMessageDialog(frame,
+                "🎉 You Win!\n\n" +
+                        "Time Score: " + baseScore +
+                        "\nPair Bonus: " + bonus +
+                        "\nTotal Score: " + totalScore,
+                "Victory",
+                JOptionPane.INFORMATION_MESSAGE);
     }
+
+    private void handleLoss() {
+
+        JOptionPane.showMessageDialog(frame,
+                "⏰ Time's up!\nYou Lost!",
+                "Game Over",
+                JOptionPane.ERROR_MESSAGE);
+    }
+
 }
