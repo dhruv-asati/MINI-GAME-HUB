@@ -3,9 +3,12 @@ import java.awt.*;
 public class Enemy {
 
     public int x, y;
-    public int width = 50;
-    public int height = 80;
-    public int speed = 6;
+
+    // 🔥 BIGGER CARS
+    public int width = 70;
+    public int height = 100;
+
+    public int speed = 7;
 
     public Enemy(int x, int y) {
         this.x = x;
@@ -22,22 +25,17 @@ public class Enemy {
 
     public void draw(Graphics2D g2) {
 
-        // body
         g2.setColor(new Color(200, 30, 30));
         g2.fillRoundRect(x, y, width, height, 15, 15);
 
-        // windshield
         g2.setColor(Color.BLACK);
-        g2.fillRoundRect(x + 10, y + 10, 30, 20, 10, 10);
+        g2.fillRoundRect(x + 12, y + 12, 45, 25, 10, 10);
 
-        // wheels
-        g2.setColor(Color.BLACK);
-        g2.fillOval(x + 5, y + 60, 10, 15);
-        g2.fillOval(x + 35, y + 60, 10, 15);
+        g2.fillOval(x + 8, y + 75, 15, 20);
+        g2.fillOval(x + 47, y + 75, 15, 20);
 
-        // headlights
         g2.setColor(Color.YELLOW);
-        g2.fillOval(x + 5, y + 5, 8, 8);
-        g2.fillOval(x + 37, y + 5, 8, 8);
+        g2.fillOval(x + 8, y + 6, 10, 10);
+        g2.fillOval(x + 52, y + 6, 10, 10);
     }
 }

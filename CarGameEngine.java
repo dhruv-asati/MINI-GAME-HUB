@@ -15,7 +15,15 @@ public class CarGameEngine implements Runnable, KeyListener {
     private boolean leftPressed = false;
     private boolean rightPressed = false;
 
-    // game engine which starts the game backend
+    private int spawnCooldown = 0;
+
+    // 🔥 NEW: timing + scaling
+    private long startTime;
+    private int lastSecond = 0;
+    private int difficultyLevel = 0;
+
+    private double speedMultiplier = 1.0;
+
     public CarGameEngine(CarGameUI.GamePanel panel, CarGameUI ui) {
         this.panel = panel;
         this.ui = ui;
@@ -24,9 +32,10 @@ public class CarGameEngine implements Runnable, KeyListener {
         panel.addKeyListener(this);
 
         SwingUtilities.invokeLater(() -> panel.reset());
+
+        startTime = System.currentTimeMillis();
     }
 
-    // this will run when you call using thread it will update things regularly
     @Override
     public void run() {
         try {
@@ -36,7 +45,7 @@ public class CarGameEngine implements Runnable, KeyListener {
                 Thread.sleep(20);
             }
         } catch (Exception e) {
-            System.out.println("Game Loop Error: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
@@ -44,83 +53,92 @@ public class CarGameEngine implements Runnable, KeyListener {
         running = false;
     }
 
-    // updating the game simultaneously as we have to move the car
     private void updateGame() {
+
+        updateScoreAndDifficulty(); // 🔥 NEW
 
         movePlayer();
         moveEnemies();
         spawnEnemies();
         checkCollision();
-
-        panel.score++;
     }
 
-    // moving the players car
+    // 🔥 SCORING + DIFFICULTY SYSTEM
+    private void updateScoreAndDifficulty() {
+
+        int seconds = (int)((System.currentTimeMillis() - startTime) / 1000);
+
+        // add score every second
+        if (seconds > lastSecond) {
+            panel.score += 20;
+            lastSecond = seconds;
+        }
+
+        // increase difficulty every 10 sec
+        int newLevel = seconds / 10;
+
+        if (newLevel > difficultyLevel) {
+            difficultyLevel = newLevel;
+
+            // increase speed by 30%
+            speedMultiplier *= 1.3;
+        }
+    }
+
     private void movePlayer() {
 
-        int roadLeft = panel.getWidth() / 2 - 200;
-        int roadRight = panel.getWidth() / 2 + 200 - 50;
+        int baseSpeed = 8;
+        int moveSpeed = (int)(baseSpeed * speedMultiplier);
 
-        int moveSpeed = 8; // setting the moving speed of the players car
-
-        if (leftPressed && panel.playerX > roadLeft) {
+        if (leftPressed && panel.playerX > panel.roadLeft)
             panel.playerX -= moveSpeed;
-        }
 
-        if (rightPressed && panel.playerX < roadRight) {
+        if (rightPressed && panel.playerX < panel.roadRight - 70)
             panel.playerX += moveSpeed;
-        }
     }
 
-    // moving the enemies acc to y coordinate
     private void moveEnemies() {
         for (Enemy e : enemies) {
-            e.move();
+            e.y += (int)(e.speed * speedMultiplier);
         }
         enemies.removeIf(e -> e.y > panel.getHeight());
     }
 
-    // checking if it is safe to spawn or there already exist a enemy
-    private boolean isSafeToSpawn(int newX) {
-
-        for (Enemy e : enemies) {
-
-            // horizontal distance check
-            int dx = Math.abs(e.x - newX);
-
-            // vertical distance check (only near top)
-            int dy = e.y;
-
-            if (dy < 150 && dx < 80) {
-                return false; // too close
-            }
-        }
-
-        return true;
-    }
-
-    // spawning enemies
     private void spawnEnemies() {
 
-        if (rand.nextInt(25) != 0)
+        if (spawnCooldown > 0) {
+            spawnCooldown--;
             return;
-
-        int roadLeft = panel.getWidth() / 2 - 200;
-        int roadRight = panel.getWidth() / 2 + 200 - 50;
-
-        int x = roadLeft + rand.nextInt(roadRight - roadLeft);
-
-        // checking if is it safe to spawn enemy cars
-        if (isSafeToSpawn(x)) {
-            enemies.add(new Enemy(x, -100));
         }
-        if (enemies.size() > 6)
-            return;
+
+        if (rand.nextInt(25) != 0) return;
+
+        int laneCount = panel.laneCount;
+        int roadWidth = panel.roadRight - panel.roadLeft;
+        int laneWidth = roadWidth / laneCount;
+
+        int carsInWave = 2 + rand.nextInt(2);
+
+        List<Integer> lanes = new ArrayList<>();
+        for (int i = 0; i < laneCount; i++) lanes.add(i);
+        Collections.shuffle(lanes);
+
+        for (int i = 0; i < carsInWave; i++) {
+
+            int lane = lanes.get(i);
+
+            int x = panel.roadLeft + lane * laneWidth + (laneWidth / 2) - 35;
+
+            int y = -150 - rand.nextInt(300);
+
+            enemies.add(new Enemy(x, y));
+        }
+
+        spawnCooldown = 35;
     }
 
-    // checking for the collision.
     private void checkCollision() {
-        Rectangle player = new Rectangle(panel.playerX, panel.playerY, 50, 80);
+        Rectangle player = new Rectangle(panel.playerX, panel.playerY, 70, 100);
 
         for (Enemy e : enemies) {
             if (player.intersects(e.getBounds())) {
@@ -129,17 +147,12 @@ public class CarGameEngine implements Runnable, KeyListener {
         }
     }
 
-    // game over
     private void endGame() {
-        if (!running)
-            return; // prevents multiple dialogs
-        running = false;
-        SwingUtilities.invokeLater(() -> {
+        if (!running) return;
 
-            // checking if window is still visible
-            if (!ui.isDisplayable()) {
-                return;
-            }
+        running = false;
+
+        SwingUtilities.invokeLater(() -> {
 
             int option = JOptionPane.showConfirmDialog(
                     panel,
@@ -147,42 +160,22 @@ public class CarGameEngine implements Runnable, KeyListener {
                     "Game Over",
                     JOptionPane.YES_NO_OPTION);
 
-            // checking if user want to restart or exit
-            if (option == JOptionPane.YES_OPTION) {
+            if (option == JOptionPane.YES_OPTION)
                 ui.restartGame();
-            } else {
+            else
                 ui.dispose();
-            }
         });
     }
 
-    // checking which key is pressed
-    @Override
     public void keyPressed(KeyEvent e) {
-
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            leftPressed = true;
-        }
-
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            rightPressed = true;
-        }
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) leftPressed = true;
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) rightPressed = true;
     }
 
-    // checking which key is released
-    @Override
     public void keyReleased(KeyEvent e) {
-
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            leftPressed = false;
-        }
-
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            rightPressed = false;
-        }
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) leftPressed = false;
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) rightPressed = false;
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {
-    }
+    public void keyTyped(KeyEvent e) {}
 }

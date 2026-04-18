@@ -1,12 +1,16 @@
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.*;
 
 public class CarGameUI extends JFrame {
 
     public GamePanel panel;
     private CarGameEngine engine;
     private Thread gameThread;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CarGameUI());
+    }
 
     public CarGameUI() {
 
@@ -20,25 +24,20 @@ public class CarGameUI extends JFrame {
         setVisible(true);
 
         startGame();
-        // checking if game is closed but game is running
+
         addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                if (engine != null) {
+                if (engine != null)
                     engine.stop();
-                }
             }
         });
     }
 
-    // starting the game or thread whatever
     public void startGame() {
         engine = new CarGameEngine(panel, this);
         gameThread = new Thread(engine);
         gameThread.start();
     }
-
-    // if user clicks restart the game then everyting should reset
 
     public void restartGame() {
         engine.stop();
@@ -46,18 +45,24 @@ public class CarGameUI extends JFrame {
         startGame();
     }
 
-    // PANEL
+    // ================= PANEL =================
     static class GamePanel extends JPanel {
 
-        public int playerX;
-        public int playerY;
-        public int score = 0;
-
+        public int playerX, playerY, score = 0;
         public List<Enemy> enemies;
 
+        private Image bg;
+
+        public int roadLeft, roadRight;
+        public int laneCount = 5;
+
+        // 🔥 YOUR EXACT PIXEL VALUES
+        private final int IMG_ROAD_LEFT = 256;
+        private final int IMG_ROAD_RIGHT = 766;
+
         public GamePanel() {
-            setBackground(Color.BLACK);
             setFocusable(true);
+            bg = new ImageIcon("images/road.png").getImage();
         }
 
         public void setEnemies(List<Enemy> enemies) {
@@ -66,65 +71,75 @@ public class CarGameUI extends JFrame {
 
         public void reset() {
             score = 0;
-            playerX = getWidth() / 2 - 25;
-            playerY = getHeight() - 120;
+            playerX = getWidth() / 2 - 35;
+            playerY = getHeight() - 130;
         }
 
-        @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            try {
-                Graphics2D g2 = (Graphics2D) g;
+            Graphics2D g2 = (Graphics2D) g;
 
-                int w = getWidth();
-                int h = getHeight();
+            int w = getWidth();
+            int h = getHeight();
 
-                int roadWidth = 400;
-                int roadX = w / 2 - roadWidth / 2;
+            int imgW = bg.getWidth(null);
+            int imgH = bg.getHeight(null);
 
-                // road
-                g2.setColor(Color.DARK_GRAY);
-                g2.fillRect(roadX, 0, roadWidth, h);
+            double scale = Math.max((double) w / imgW, (double) h / imgH);
 
-                // lane lines (visual only)
-                g2.setColor(Color.WHITE);
-                for (int i = 0; i < h; i += 40) {
-                    g2.fillRect(roadX + roadWidth / 3, i, 10, 20);
-                    g2.fillRect(roadX + 2 * roadWidth / 3, i, 10, 20);
+            int newW = (int) (imgW * scale);
+            int newH = (int) (imgH * scale);
+
+            int x = (w - newW) / 2;
+            int y = (h - newH) / 2;
+
+            g2.drawImage(bg, x, y, newW, newH, null);
+
+            // 🔥 EXACT ROAD BOUNDS (NO GUESSING ANYMORE)
+            roadLeft = x + (int) (IMG_ROAD_LEFT * scale);
+            roadRight = x + (int) (IMG_ROAD_RIGHT * scale);
+
+            int roadWidth = roadRight - roadLeft;
+            int laneWidth = roadWidth / laneCount;
+
+            // 🔥 PERFECTLY EQUAL LANES
+            g2.setColor(Color.WHITE);
+
+            for (int i = 1; i < laneCount; i++) {
+                int lx = roadLeft + i * laneWidth;
+
+                for (int yy = 0; yy < h; yy += 35) {
+                    g2.fillRect(lx, yy, 2, 18);
                 }
-
-                drawPlayerCar(g2);
-
-                if (enemies != null) {
-                    for (Enemy e : enemies) {
-                        e.draw(g2);
-                    }
-                }
-
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Verdana", Font.BOLD, 20));
-                g2.drawString("Score: " + score, 20, 30);
-
-            } catch (Exception e) {
-                System.out.println("UI Error: " + e.getMessage());
             }
+
+            drawPlayerCar(g2);
+
+            if (enemies != null) {
+                for (Enemy e : enemies)
+                    e.draw(g2);
+            }
+
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Verdana", Font.BOLD, 20));
+            g2.drawString("Score: " + score, 20, 30);
         }
 
         private void drawPlayerCar(Graphics2D g2) {
 
             g2.setColor(Color.CYAN);
-            g2.fillRoundRect(playerX, playerY, 50, 80, 15, 15);
+            g2.fillRoundRect(playerX, playerY, 70, 100, 15, 15);
 
             g2.setColor(Color.BLACK);
-            g2.fillRoundRect(playerX + 10, playerY + 10, 30, 20, 10, 10);
+            g2.fillRoundRect(playerX + 12, playerY + 12, 45, 25, 10, 10);
 
-            g2.fillOval(playerX + 5, playerY + 60, 10, 15);
-            g2.fillOval(playerX + 35, playerY + 60, 10, 15);
+            g2.fillOval(playerX + 8, playerY + 75, 15, 20);
+            g2.fillOval(playerX + 47, playerY + 75, 15, 20);
 
             g2.setColor(Color.GREEN);
-            g2.fillOval(playerX + 5, playerY + 5, 8, 8);
-            g2.fillOval(playerX + 37, playerY + 5, 8, 8);
+            g2.fillOval(playerX + 8, playerY + 6, 10, 10);
+            g2.fillOval(playerX + 52, playerY + 6, 10, 10);
         }
     }
 }
