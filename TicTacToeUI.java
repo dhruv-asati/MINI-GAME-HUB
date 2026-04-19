@@ -3,13 +3,16 @@ import java.awt.event.*;
 import javax.swing.*;
 
 class BackgroundPanel extends JPanel {
+
     private Image bgImage;
 
-    public BackgroundPanel(String path) {
-        bgImage = new ImageIcon(path).getImage();
+    public BackgroundPanel(String resourcePath) {
+        // 🔥 SAFE RESOURCE LOADING (works in JAR + EXE)
+        bgImage = new ImageIcon(getClass().getResource(resourcePath)).getImage();
         setLayout(new BorderLayout());
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
@@ -32,30 +35,30 @@ public class TicTacToeUI {
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        BackgroundPanel bgPanel = new BackgroundPanel("images/tictactoe.png");
+        // 🔥 FIXED: resource path instead of file path
+        BackgroundPanel bgPanel = new BackgroundPanel("/images/tictactoe.png");
         frame.setContentPane(bgPanel);
 
         // 🔥 TITLE
         JLabel title = new JLabel("TIC TAC TOE", JLabel.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 50));
         title.setBorder(BorderFactory.createEmptyBorder(40, 0, 10, 0));
-        frame.add(title, BorderLayout.NORTH);
+
+        bgPanel.add(title, BorderLayout.NORTH);
 
         // 🔥 CENTER PANEL
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
 
-        // 🔥 STATUS (SHIFTED DOWN PROPERLY)
         statusLabel = new JLabel("Player X Turn", JLabel.CENTER);
         statusLabel.setFont(new Font("Arial", Font.BOLD, 34));
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        centerPanel.add(Box.createVerticalStrut(40)); // 👈 pushes it DOWN from title
+        centerPanel.add(Box.createVerticalStrut(40));
         centerPanel.add(statusLabel);
-        centerPanel.add(Box.createVerticalStrut(10)); // 👈 keeps it CLOSE to board
+        centerPanel.add(Box.createVerticalStrut(10));
 
-        // 🔥 BOARD
         boardPanel = new TicTacToePanel();
 
         JPanel boardWrapper = new JPanel(new GridBagLayout());
@@ -63,7 +66,8 @@ public class TicTacToeUI {
         boardWrapper.add(boardPanel);
 
         centerPanel.add(boardWrapper);
-        frame.add(centerPanel, BorderLayout.CENTER);
+
+        bgPanel.add(centerPanel, BorderLayout.CENTER);
 
         // 🔴 BUTTON
         JButton resetBtn = new JButton("RESTART");
@@ -78,7 +82,7 @@ public class TicTacToeUI {
         bottom.setOpaque(false);
         bottom.add(resetBtn);
 
-        frame.add(bottom, BorderLayout.SOUTH);
+        bgPanel.add(bottom, BorderLayout.SOUTH);
 
         frame.setVisible(true);
     }
@@ -132,6 +136,7 @@ public class TicTacToeUI {
             });
         }
 
+        @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
@@ -143,7 +148,6 @@ public class TicTacToeUI {
             int h = getHeight();
             int cell = w / 3;
 
-            // 🔥 BLACK GRID
             g2.setStroke(new BasicStroke(5));
             g2.setColor(Color.BLACK);
 
@@ -152,7 +156,6 @@ public class TicTacToeUI {
             g2.drawLine(0, cell, w, cell);
             g2.drawLine(0, 2 * cell, w, 2 * cell);
 
-            // 🔥 DRAW X/O
             char[][] board = game.getBoard();
 
             for (int r = 0; r < 3; r++) {
