@@ -23,12 +23,13 @@ public class BattleshipUI {
 
         frame = new JFrame("BATTLESHIPS");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // BACKGROUND PANEL
+        // BACKGROUND PANEL (FIXED FOR EXE)
         JPanel bgPanel = new JPanel() {
-            Image bg = new ImageIcon("images/battleshipbg.png").getImage();
+
+            Image bg = new ImageIcon(
+                    getClass().getResource("/images/battleshipbg.png")).getImage();
 
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -110,7 +111,7 @@ public class BattleshipUI {
     }
 
     public static void main(String[] args) {
-        new BattleshipUI(); // 🔥 constructor call
+        new BattleshipUI();
     }
 
     private JPanel createBoard(boolean isP2) {
@@ -127,6 +128,7 @@ public class BattleshipUI {
         grid.setPreferredSize(new Dimension(300, 300));
 
         for (int i = 0; i < 36; i++) {
+
             int row = i / 6;
             int col = i % 6;
 
@@ -145,7 +147,9 @@ public class BattleshipUI {
                 if (!game.player1Turn && isP2)
                     return;
 
-                BattleshipBoard target = game.player1Turn ? game.player2Board : game.player1Board;
+                BattleshipBoard target = game.player1Turn
+                        ? game.player2Board
+                        : game.player1Board;
 
                 if (target.grid[row][col] == 2 || target.grid[row][col] == 3)
                     return;
@@ -226,6 +230,7 @@ public class BattleshipUI {
     }
 
     private void updateLabels() {
+
         turnLabel.setText(game.getTurnText());
 
         p1Score.setText("Ships destroyed: " + game.getP2Destroyed() + "/3");

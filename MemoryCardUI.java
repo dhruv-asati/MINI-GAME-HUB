@@ -20,25 +20,27 @@ public class MemoryCardUI {
 
     public MemoryCardUI() {
 
-        frame = new JFrame("Fruit Match"); // 🔥 window title updated
+        frame = new JFrame("Fruit Match");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // 🔥 BACKGROUND IMAGE
+        // ================= BACKGROUND (FIXED) =================
         JPanel background = new JPanel() {
-            private Image bg = new ImageIcon("images/memorybg.png").getImage();
+
+            private Image bg = loadImage("/images/memorybg.png");
 
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+                if (bg != null) {
+                    g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+                }
             }
         };
 
         background.setLayout(new BorderLayout());
         frame.setContentPane(background);
 
-        // 🔥 TITLE UPDATED
+        // ================= TITLE =================
         JLabel title = new JLabel("Fruit Match", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 34));
         title.setForeground(new Color(180, 220, 255));
@@ -50,7 +52,7 @@ public class MemoryCardUI {
 
         frame.add(topPanel, BorderLayout.NORTH);
 
-        // 🔥 CENTER
+        // ================= CENTER =================
         JPanel centerWrapper = new JPanel(new GridBagLayout());
         centerWrapper.setOpaque(false);
 
@@ -60,7 +62,6 @@ public class MemoryCardUI {
 
         cardPanel = new JPanel();
         cardPanel.setOpaque(false);
-        cardPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         timerLabel = new JLabel("Time Left: 0", SwingConstants.CENTER);
         timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -74,9 +75,8 @@ public class MemoryCardUI {
         centerWrapper.add(gameContainer);
         frame.add(centerWrapper, BorderLayout.CENTER);
 
-        // 🔥 RESTART BUTTON
+        // ================= RESTART =================
         JButton restartButton = new JButton("Restart");
-        restartButton.setPreferredSize(new Dimension(120, 35));
 
         JPanel bottomPanel = new JPanel();
         bottomPanel.setOpaque(false);
@@ -87,14 +87,32 @@ public class MemoryCardUI {
 
         frame.add(bottomPanel, BorderLayout.SOUTH);
 
-        // 🔥 COVER TILE
-        coverIcon = new ImageIcon("images/TILE.png");
-        Image img = coverIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
-        coverIcon = new ImageIcon(img);
+        // ================= COVER TILE (FIXED) =================
+        Image tileImg = loadImage("/images/TILE.png");
+
+        if (tileImg != null) {
+            Image scaled = tileImg.getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+            coverIcon = new ImageIcon(scaled);
+        } else {
+            coverIcon = new ImageIcon();
+        }
 
         chooseDifficulty();
 
         frame.setVisible(true);
+    }
+
+    // ================= SAFE IMAGE LOADER =================
+    private Image loadImage(String path) {
+
+        java.net.URL url = getClass().getResource(path);
+
+        if (url == null) {
+            System.out.println("Missing: " + path);
+            return null;
+        }
+
+        return new ImageIcon(url).getImage();
     }
 
     private void chooseDifficulty() {
@@ -113,7 +131,7 @@ public class MemoryCardUI {
             timeLeft = 150;
             multiplier = 2;
 
-        } else { // hard
+        } else {
             ROWS = 6;
             COLS = 6;
             timeLeft = 180;
@@ -129,11 +147,11 @@ public class MemoryCardUI {
         cardPanel.removeAll();
 
         cardPanel.setLayout(new GridLayout(ROWS, COLS, 16, 16));
-        cardPanel.setMaximumSize(new Dimension(450, 450));
 
         int total = ROWS * COLS;
 
         List<CardData> cards = ImageLoader.getCards(total, 60);
+
         game = new GameLogic(cards, coverIcon, this::handleWin);
 
         for (int i = 0; i < total; i++) {
@@ -146,9 +164,6 @@ public class MemoryCardUI {
             card.setFocusPainted(false);
 
             card.setIcon(coverIcon);
-
-            card.putClientProperty("revealed", false);
-            card.putClientProperty("matched", false);
 
             int index = i;
 
@@ -192,12 +207,9 @@ public class MemoryCardUI {
         int totalScore = baseScore + bonus;
 
         JOptionPane.showMessageDialog(frame,
-                "🎉 You Win!\n\n" +
-                        "Time Score: " + baseScore +
+                "🎉 You Win!\n\nTime Score: " + baseScore +
                         "\nPair Bonus: " + bonus +
-                        "\nTotal Score: " + totalScore,
-                "Victory",
-                JOptionPane.INFORMATION_MESSAGE);
+                        "\nTotal Score: " + totalScore);
     }
 
     private void handleLoss() {
@@ -207,5 +219,4 @@ public class MemoryCardUI {
                 "Game Over",
                 JOptionPane.ERROR_MESSAGE);
     }
-
 }

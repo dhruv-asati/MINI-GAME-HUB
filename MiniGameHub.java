@@ -1,15 +1,11 @@
-
 import javax.swing.*;
 import java.awt.*;
 import javax.sound.sampled.*;
-import java.io.File;
 
 public class MiniGameHub {
 
     static Clip clip;
     static boolean isMuted = false;
-    static float previousVolume = -10.0f;
-
     static JButton muteBtn;
 
     public static void main(String[] args) {
@@ -18,33 +14,28 @@ public class MiniGameHub {
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Background Panel
+        // ================= BACKGROUND (FIXED) =================
         JPanel background = new JPanel() {
-            Image img = new ImageIcon("images/bg.jpg").getImage();
+
+            Image img = loadImage("/images/bg.jpg");
 
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+                if (img != null) {
+                    g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+                }
             }
         };
 
         background.setLayout(new BorderLayout());
         frame.setContentPane(background);
 
-        // ================= TOP RIGHT ICON =================
+        // ================= TOP PANEL =================
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         topPanel.setOpaque(false);
 
-        // load icons
-        ImageIcon soundIcon = new ImageIcon(
-                new ImageIcon("images/sound.png")
-                        .getImage()
-                        .getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-
-        ImageIcon muteIcon = new ImageIcon(
-                new ImageIcon("images/mute.png")
-                        .getImage()
-                        .getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        ImageIcon soundIcon = scaleIcon("/images/sound.png");
+        ImageIcon muteIcon = scaleIcon("/images/mute.png");
 
         muteBtn = new JButton(soundIcon);
         muteBtn.setFocusPainted(false);
@@ -95,27 +86,26 @@ public class MiniGameHub {
 
         background.add(buttonPanel, BorderLayout.CENTER);
 
-        // ================= PLAY MUSIC =================
-        playMusic("audio/theme.wav");
+        // ================= MUSIC (FIXED) =================
+        playMusic("/audio/theme.wav");
 
-        // ================= MUTE LOGIC =================
+        // ================= MUTE =================
         muteBtn.addActionListener(e -> {
             if (clip != null) {
                 if (!isMuted) {
-                    clip.stop(); // 🔥 instant stop
+                    clip.stop();
                     muteBtn.setIcon(muteIcon);
-                    isMuted = true;
                 } else {
-                    clip.start(); // resume
+                    clip.start();
                     muteBtn.setIcon(soundIcon);
-                    isMuted = false;
                 }
+                isMuted = !isMuted;
             }
         });
 
         frame.setVisible(true);
 
-        // ================= BUTTON ACTIONS =================
+        // ================= GAME LAUNCHERS =================
         b1.addActionListener(e -> new CarGameUI());
         b2.addActionListener(e -> new HangmanUI());
         b3.addActionListener(e -> new TicTacToeUI());
@@ -124,37 +114,64 @@ public class MiniGameHub {
         b6.addActionListener(e -> new MemoryCardUI());
     }
 
-    static void styleButton(JButton b, Color bg) {
-        b.setBackground(bg);
-        b.setForeground(Color.BLACK);
-        b.setFont(new Font("Algerian", Font.BOLD, 30));
-        b.setFocusPainted(false);
-        b.setOpaque(true);
-
-        b.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK, 3),
-                BorderFactory.createLineBorder(Color.WHITE, 3)));
-
-        b.setPreferredSize(new Dimension(300, 80));
+    // ================= SAFE IMAGE LOADER =================
+    static Image loadImage(String path) {
+        java.net.URL url = MiniGameHub.class.getResource(path);
+        if (url != null) {
+            return new ImageIcon(url).getImage();
+        }
+        System.out.println("Missing: " + path);
+        return null;
     }
 
-    static void playMusic(String filePath) {
+    static ImageIcon scaleIcon(String path) {
+
+        Image img = loadImage(path);
+
+        if (img == null)
+            return new ImageIcon();
+
+        Image scaled = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
+    }
+
+    // ================= MUSIC (FIXED) =================
+    static void playMusic(String path) {
+
         try {
-            File file = new File(filePath);
-            AudioInputStream audio = AudioSystem.getAudioInputStream(file);
+
+            java.net.URL url = MiniGameHub.class.getResource(path);
+
+            if (url == null) {
+                System.out.println("Missing audio: " + path);
+                return;
+            }
+
+            AudioInputStream audio = AudioSystem.getAudioInputStream(url);
 
             clip = AudioSystem.getClip();
             clip.open(audio);
-
-            FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-            volume.setValue(previousVolume);
-
             clip.loop(Clip.LOOP_CONTINUOUSLY);
             clip.start();
 
         } catch (Exception e) {
-            System.out.println("Error playing music");
+            System.out.println("Audio error");
             e.printStackTrace();
         }
+    }
+
+    // ================= STYLE =================
+    static void styleButton(JButton b, Color bg) {
+
+        b.setBackground(bg);
+        b.setForeground(Color.BLACK);
+        b.setFont(new Font("Algerian", Font.BOLD, 30));
+        b.setFocusPainted(false);
+
+        b.setPreferredSize(new Dimension(300, 80));
+
+        b.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK, 3),
+                BorderFactory.createLineBorder(Color.WHITE, 3)));
     }
 }

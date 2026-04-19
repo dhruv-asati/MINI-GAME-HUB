@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class HangmanUI {
+
     private HangmanBackend backend;
     private JLabel wordLabel;
     private JLabel attempts;
@@ -9,11 +10,12 @@ public class HangmanUI {
     private JLabel guessLabel;
 
     public HangmanUI() {
+
         JFrame frame = new JFrame("HANGMAN GAME");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // ================= BACKGROUND PANEL =================
+        // ================= BACKGROUND =================
         BackgroundPanel background = new BackgroundPanel();
         background.setLayout(new BorderLayout(20, 20));
         frame.setContentPane(background);
@@ -25,26 +27,22 @@ public class HangmanUI {
         JLabel title = new JLabel("HANGMAN", JLabel.CENTER);
         title.setFont(new Font("Georgia", Font.BOLD, 50));
         title.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        title.setForeground(Color.WHITE); // important for visibility
+        title.setForeground(Color.WHITE);
 
         background.add(title, BorderLayout.NORTH);
 
-        // ================= MAIN PANEL =================
+        // ================= MAIN =================
         JPanel mainPanel = new JPanel(new GridLayout(1, 2, 50, 50));
         mainPanel.setOpaque(false);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 80, 30, 80));
 
         background.add(mainPanel, BorderLayout.CENTER);
 
-        // ================= LEFT PANEL =================
+        // ================= LEFT IMAGE =================
         JLabel hangmanImageLabel = new JLabel();
         hangmanImageLabel.setHorizontalAlignment(JLabel.CENTER);
-        hangmanImageLabel.setVerticalAlignment(JLabel.CENTER);
 
-        mainPanel.setOpaque(false);
-
-        hangmanImageLabel.setIcon(
-                new ImageIcon("images/hangman-wrong-images/guess0.png"));
+        hangmanImageLabel.setIcon(loadImage("/images/hangman-wrong-images/guess0.png"));
 
         mainPanel.add(hangmanImageLabel);
 
@@ -52,7 +50,6 @@ public class HangmanUI {
         JPanel rightPanel = new JPanel(new BorderLayout(20, 20));
         rightPanel.setOpaque(false);
 
-        // TOP INFO
         JPanel infoPanel = new JPanel(new GridLayout(4, 1, 10, 10));
         infoPanel.setOpaque(false);
 
@@ -79,12 +76,13 @@ public class HangmanUI {
 
         rightPanel.add(infoPanel, BorderLayout.NORTH);
 
-        // ================= LETTER PANEL =================
+        // ================= LETTERS =================
         JPanel lettersPanel = new JPanel(new GridLayout(5, 6, 10, 10));
         lettersPanel.setOpaque(false);
         lettersPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         for (char c = 'A'; c <= 'Z'; c++) {
+
             final char letter = c;
 
             JButton letterBtn = new JButton(String.valueOf(letter));
@@ -93,6 +91,7 @@ public class HangmanUI {
             letterBtn.setBackground(Color.WHITE);
 
             letterBtn.addActionListener(e -> {
+
                 letterBtn.setEnabled(false);
 
                 boolean correct = backend.guessLetter(letter);
@@ -101,18 +100,21 @@ public class HangmanUI {
                 attempts.setText("Attempts Left: " + backend.attemptsLeft());
 
                 if (!correct) {
+
                     wrongLetters.setText(wrongLetters.getText() + " " + letter);
                     letterBtn.setBackground(Color.RED);
 
                     int wrongAttempts = backend.attemptsLeft();
-                    hangmanImageLabel.setIcon(new ImageIcon(
-                            "images/hangman-wrong-images/guess" + (wrongAttempts + 1) + ".png"));
+
+                    hangmanImageLabel.setIcon(loadImage(
+                            "/images/hangman-wrong-images/guess" + (wrongAttempts + 1) + ".png"));
 
                 } else {
                     letterBtn.setBackground(Color.GREEN);
                 }
 
                 if (backend.isGameOver()) {
+
                     String message = backend.isWin()
                             ? "Congratulations! You guessed the word: " + backend.getWordToGuess()
                             : "Game Over! The word was: " + backend.getWordToGuess();
@@ -126,7 +128,7 @@ public class HangmanUI {
 
         rightPanel.add(lettersPanel, BorderLayout.CENTER);
 
-        // ================= RESET BUTTON =================
+        // ================= RESET =================
         JPanel bottomPanel = new JPanel();
         bottomPanel.setOpaque(false);
 
@@ -134,14 +136,14 @@ public class HangmanUI {
         styleButton(resetBtn);
 
         resetBtn.addActionListener(e -> {
+
             backend = new HangmanBackend(selectedDifficulty);
 
-            wordLabel.setText(backend.getDisplayWord().replaceAll("", " ").trim());
+            wordLabel.setText(getUnderscores(backend.getWordToGuess()));
             attempts.setText("Attempts Left: " + backend.attemptsLeft());
             wrongLetters.setText("Wrong: ");
 
-            hangmanImageLabel.setIcon(
-                    new ImageIcon("images/hangman-wrong-images/guess0.png"));
+            hangmanImageLabel.setIcon(loadImage("/images/hangman-wrong-images/guess0.png"));
 
             Component[] components = lettersPanel.getComponents();
             for (Component comp : components) {
@@ -160,25 +162,47 @@ public class HangmanUI {
         frame.setVisible(true);
     }
 
-    // ================= BACKGROUND CLASS =================
-    static class BackgroundPanel extends JPanel {
+    // ================= SAFE IMAGE LOADER =================
+    private ImageIcon loadImage(String path) {
 
-        Image img = new ImageIcon("images/hangmanbg.jpeg").getImage();
+        java.net.URL url = getClass().getResource(path);
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-
-            g2.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+        if (url != null) {
+            return new ImageIcon(url);
+        } else {
+            System.out.println("Missing: " + path);
+            return new ImageIcon();
         }
     }
 
-    // ================= BUTTON STYLE =================
+    // ================= BACKGROUND =================
+    static class BackgroundPanel extends JPanel {
+
+        Image img;
+
+        public BackgroundPanel() {
+
+            java.net.URL url = getClass().getResource("/images/hangmanbg.jpeg");
+
+            if (url != null) {
+                img = new ImageIcon(url).getImage();
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+
+            super.paintComponent(g);
+
+            if (img != null) {
+                g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+            }
+        }
+    }
+
+    // ================= STYLE =================
     static void styleButton(JButton b) {
+
         b.setFont(new Font("Arial", Font.BOLD, 20));
         b.setBackground(new Color(30, 144, 255));
         b.setForeground(Color.WHITE);

@@ -9,7 +9,7 @@ public class CarGameUI extends JFrame {
     private Thread gameThread;
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CarGameUI());
+        SwingUtilities.invokeLater(CarGameUI::new);
     }
 
     public CarGameUI() {
@@ -56,13 +56,19 @@ public class CarGameUI extends JFrame {
         public int roadLeft, roadRight;
         public int laneCount = 5;
 
-        // 🔥 YOUR EXACT PIXEL VALUES
         private final int IMG_ROAD_LEFT = 256;
         private final int IMG_ROAD_RIGHT = 766;
 
         public GamePanel() {
             setFocusable(true);
-            bg = new ImageIcon("images/road.png").getImage();
+
+            // 🔥 FIXED FOR EXE (IMPORTANT)
+            java.net.URL url = getClass().getResource("/images/road.png");
+            if (url != null) {
+                bg = new ImageIcon(url).getImage();
+            } else {
+                System.out.println("ERROR: road.png not found in resources!");
+            }
         }
 
         public void setEnemies(List<Enemy> enemies) {
@@ -77,6 +83,9 @@ public class CarGameUI extends JFrame {
 
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
+
+            if (bg == null)
+                return;
 
             Graphics2D g2 = (Graphics2D) g;
 
@@ -96,14 +105,13 @@ public class CarGameUI extends JFrame {
 
             g2.drawImage(bg, x, y, newW, newH, null);
 
-            // 🔥 EXACT ROAD BOUNDS (NO GUESSING ANYMORE)
+            // ROAD BOUNDS
             roadLeft = x + (int) (IMG_ROAD_LEFT * scale);
             roadRight = x + (int) (IMG_ROAD_RIGHT * scale);
 
             int roadWidth = roadRight - roadLeft;
             int laneWidth = roadWidth / laneCount;
 
-            // 🔥 PERFECTLY EQUAL LANES
             g2.setColor(Color.WHITE);
 
             for (int i = 1; i < laneCount; i++) {

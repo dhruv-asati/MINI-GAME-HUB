@@ -27,30 +27,30 @@ public class FourInARowUI {
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        BackgroundPanel bgPanel = new BackgroundPanel("images/fourinarowbg.png");
+        // ✅ FIXED BACKGROUND LOADING FOR EXE
+        BackgroundPanel bgPanel = new BackgroundPanel();
         bgPanel.setLayout(new BorderLayout());
         frame.setContentPane(bgPanel);
 
-        // 🔥 TITLE
+        // TITLE
         titleLabel = new JLabel("FOUR IN A ROW", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 60));
         titleLabel.setForeground(Color.WHITE);
         bgPanel.add(titleLabel, BorderLayout.NORTH);
 
-        // 🔥 CENTER PANEL
+        // CENTER PANEL
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
 
-        // 🔥 INCREASED FONT SIZE HERE
         turnLabel = new JLabel("", SwingConstants.CENTER);
-        turnLabel.setFont(new Font("Arial", Font.BOLD, 34)); // was ~26
+        turnLabel.setFont(new Font("Arial", Font.BOLD, 34));
         turnLabel.setForeground(Color.WHITE);
         turnLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         timerLabel = new JLabel("", SwingConstants.CENTER);
-        timerLabel.setFont(new Font("Arial", Font.PLAIN, 26)); // was ~20
-        timerLabel.setForeground(new Color(203, 213, 245)); // softer white
+        timerLabel.setFont(new Font("Arial", Font.PLAIN, 26));
+        timerLabel.setForeground(new Color(203, 213, 245));
         timerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         centerPanel.add(Box.createVerticalStrut(40));
@@ -58,13 +58,12 @@ public class FourInARowUI {
         centerPanel.add(timerLabel);
         centerPanel.add(Box.createVerticalStrut(20));
 
-        int gap = 10;
-
-        boardPanel = new JPanel(new GridLayout(ROWS, COLS, gap, gap));
-        boardPanel.setBackground(new Color(11, 31, 91)); // improved palette
-        boardPanel.setBorder(BorderFactory.createEmptyBorder(gap, gap, gap, gap));
+        boardPanel = new JPanel(new GridLayout(ROWS, COLS, 10, 10));
+        boardPanel.setBackground(new Color(11, 31, 91));
+        boardPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         for (int i = 0; i < ROWS * COLS; i++) {
+
             int row = i / COLS;
             int col = i % COLS;
 
@@ -114,7 +113,7 @@ public class FourInARowUI {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new FourInARowUI());
+        SwingUtilities.invokeLater(FourInARowUI::new);
     }
 
     private void handleMove(int col) {
@@ -150,11 +149,11 @@ public class FourInARowUI {
     }
 
     private void startTurnTimer() {
+
         timeLeft = 15;
 
-        if (turnTimer != null) {
+        if (turnTimer != null)
             turnTimer.stop();
-        }
 
         turnTimer = new Timer(1000, e -> {
             timeLeft--;
@@ -175,13 +174,14 @@ public class FourInARowUI {
             return;
 
         game.switchPlayer();
-        timeLeft = 15;
         startTurnTimer();
     }
 
     private void updateLabels() {
+
         turnLabel.setText("Player " + game.getCurrentPlayer() + "'s Turn");
-        turnLabel.setForeground(Color.white);
+        turnLabel.setForeground(Color.WHITE);
+
         timerLabel.setText("Time Left: " + timeLeft + "s");
 
         if (timeLeft <= 5) {
@@ -197,16 +197,25 @@ public class FourInARowUI {
                 cells[i][j].setColor(Color.WHITE);
     }
 
+    // ================= FIXED BACKGROUND =================
     class BackgroundPanel extends JPanel {
+
         private Image bg;
 
-        public BackgroundPanel(String path) {
-            bg = new ImageIcon(path).getImage();
+        public BackgroundPanel() {
+            java.net.URL url = getClass().getResource("/images/fourinarowbg.png");
+            if (url != null) {
+                bg = new ImageIcon(url).getImage();
+            } else {
+                System.out.println("ERROR: fourinarowbg.png not found in /images/");
+            }
         }
 
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+            if (bg != null) {
+                g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+            }
         }
     }
 
@@ -225,10 +234,12 @@ public class FourInARowUI {
         }
 
         protected void paintComponent(Graphics g) {
+
             super.paintComponent(g);
 
             Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
 
             int size = Math.min(getWidth(), getHeight());
 
