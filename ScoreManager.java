@@ -4,27 +4,44 @@ import java.util.Map;
 
 public class ScoreManager {
 
-    private static final String FILE_NAME = "scores.txt";
+    // 🔥 Store in user directory (SAFE for EXE)
+    private static final String DIR_PATH = System.getProperty("user.home") + File.separator + "MiniGameHub";
+
+    private static final String FILE_PATH = DIR_PATH + File.separator + "scores.txt";
+
+    // 🔥 Ensure folder + file exist
+    private static void ensureFile() {
+        try {
+            File dir = new File(DIR_PATH);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            File file = new File(FILE_PATH);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static int getBestScore(String gameId) {
 
-        try {
-            File file = new File(FILE_NAME);
-            if (!file.exists()) return 0;
+        ensureFile();
 
-            BufferedReader br = new BufferedReader(new FileReader(file));
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+
             String line;
 
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split("=");
 
                 if (parts.length == 2 && parts[0].equals(gameId)) {
-                    br.close();
                     return Integer.parseInt(parts[1]);
                 }
             }
-
-            br.close();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -35,26 +52,26 @@ public class ScoreManager {
 
     public static void updateBestScore(String gameId, int newScore) {
 
+        ensureFile();
+
         Map<String, Integer> scores = new HashMap<>();
 
-        try {
-            File file = new File(FILE_NAME);
+        // 🔹 Read existing scores
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
 
-            if (file.exists()) {
-                BufferedReader br = new BufferedReader(new FileReader(file));
-                String line;
+            String line;
 
-                while ((line = br.readLine()) != null) {
-                    String[] parts = line.split("=");
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("=");
 
-                    if (parts.length == 2) {
-                        scores.put(parts[0], Integer.parseInt(parts[1]));
-                    }
+                if (parts.length == 2) {
+                    scores.put(parts[0], Integer.parseInt(parts[1]));
                 }
-
-                br.close();
             }
-        } catch (Exception e) {}
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         int oldScore = scores.getOrDefault(gameId, 0);
 
@@ -62,15 +79,13 @@ public class ScoreManager {
             scores.put(gameId, newScore);
         }
 
-        try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_NAME));
+        // 🔹 Write back
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
 
             for (String key : scores.keySet()) {
                 bw.write(key + "=" + scores.get(key));
                 bw.newLine();
             }
-
-            bw.close();
 
         } catch (Exception e) {
             e.printStackTrace();
