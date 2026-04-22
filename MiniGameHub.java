@@ -69,6 +69,8 @@ public class MiniGameHub {
         JButton b4 = new JButton("4 IN A LINE");
         JButton b5 = new JButton("BATTLESHIP");
         JButton b6 = new JButton("MEMORY CARDS");
+        JButton b7 = new JButton("Whack A Shaheer");
+        JButton b8 = new JButton("Settings");
 
         styleButton(b1, new Color(244, 116, 59));
         styleButton(b2, new Color(190, 238, 98));
@@ -76,6 +78,8 @@ public class MiniGameHub {
         styleButton(b4, new Color(60, 110, 113));
         styleButton(b5, new Color(215, 235, 0));
         styleButton(b6, new Color(204, 208, 89));
+        styleButton(b7, new Color(255, 0, 255));
+        styleButton(b8, new Color(255, 255, 51));
 
         buttonPanel.add(b1);
         buttonPanel.add(b2);
@@ -83,6 +87,8 @@ public class MiniGameHub {
         buttonPanel.add(b4);
         buttonPanel.add(b5);
         buttonPanel.add(b6);
+        buttonPanel.add(b7);
+        buttonPanel.add(b8);
 
         background.add(buttonPanel, BorderLayout.CENTER);
 
@@ -112,6 +118,7 @@ public class MiniGameHub {
         b4.addActionListener(e -> new FourInARowUI());
         b5.addActionListener(e -> new BattleshipUI());
         b6.addActionListener(e -> new MemoryCardUI());
+        b7.addActionListener(e -> new WhackMain());
     }
 
     // ================= SAFE IMAGE LOADER =================

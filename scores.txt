@@ -1,0 +1,3 @@
+hangman=7
+whack=2050
+tictactoe=10
