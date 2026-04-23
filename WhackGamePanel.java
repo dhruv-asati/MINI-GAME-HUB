@@ -84,7 +84,15 @@ public class WhackGamePanel extends JPanel {
 
                 if (state == State.GAME_OVER &&
                         isInside(e.getX(), e.getY(), getWidth() / 2 + 20, getHeight() / 2 + 70, 100, 50)) {
-                    System.exit(0);
+
+                    // Close current game window
+                    Window window = SwingUtilities.getWindowAncestor(WhackGamePanel.this);
+                    if (window != null) {
+                        window.dispose();
+                    }
+
+                    // Re-open main menu
+                    // MiniGameHub.main(null);
                 }
 
                 repaint();
