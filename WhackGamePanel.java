@@ -91,8 +91,6 @@ public class WhackGamePanel extends JPanel {
                         window.dispose();
                     }
 
-                    // Re-open main menu
-                    // MiniGameHub.main(null);
                 }
 
                 repaint();
